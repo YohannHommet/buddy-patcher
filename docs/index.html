@@ -81,13 +81,33 @@ body {
 /* ── Page container ───────────────────────────────────────── */
 .page {
   position: relative; z-index: 1;
-  max-width: 640px;
+  max-width: 1060px;
   margin: 0 auto;
-  padding: 3rem 1.5rem 4rem;
+  padding: 3rem 2.5rem 4rem;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 2.5rem;
+}
+
+/* ── Hero layout (card + sidebar) ─────────────────────────── */
+.hero {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2.5rem;
+  width: 100%;
+  align-items: start;
+}
+.hero-left {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.hero-right {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  padding-top: 0.5rem;
 }
 
 /* ── Header ───────────────────────────────────────────────── */
@@ -116,7 +136,7 @@ body {
 .card-stage {
   perspective: 900px;
   width: 100%;
-  max-width: 380px;
+  max-width: 420px;
   animation: fadeUp 700ms 100ms var(--ease-out) both;
 }
 
@@ -194,19 +214,18 @@ body {
 /* ── Stats ────────────────────────────────────────────────── */
 .stats {
   width: 100%;
-  max-width: 380px;
   display: flex;
   flex-direction: column;
-  gap: 0.45rem;
+  gap: 0.5rem;
   animation: fadeUp 700ms 200ms var(--ease-out) both;
 }
 .stat-row {
   display: flex; align-items: center; gap: 0.6rem;
-  font-size: 0.7rem;
+  font-size: 0.78rem;
 }
-.stat-name { width: 80px; color: var(--text-muted); letter-spacing: 0.04em; }
+.stat-name { width: 90px; color: var(--text-muted); letter-spacing: 0.04em; }
 .stat-bar {
-  flex: 1; height: 6px;
+  flex: 1; height: 8px;
   background: rgba(255,255,255,0.04);
   border-radius: 3px;
   overflow: hidden;
@@ -224,7 +243,6 @@ body {
 /* ── Controls ─────────────────────────────────────────────── */
 .controls {
   width: 100%;
-  max-width: 380px;
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
@@ -282,7 +300,6 @@ body {
 /* ── Personalize (collapsible) ────────────────────────────── */
 .personalize {
   width: 100%;
-  max-width: 380px;
 }
 .personalize-toggle {
   width: 100%;
@@ -341,7 +358,7 @@ body {
 /* ── Patch section ────────────────────────────────────────── */
 .patch-section {
   width: 100%;
-  max-width: 480px;
+  max-width: 700px;
   display: none;
 }
 .patch-section.active { display: block; }
@@ -474,9 +491,19 @@ body {
   .particles, .grid-bg { display: none; }
 }
 
+/* ── Tablet ───────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .hero {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+  .hero-left { align-items: center; }
+  .page { padding: 2rem 1.5rem 3rem; }
+}
+
 /* ── Mobile ───────────────────────────────────────────────── */
 @media (max-width: 480px) {
-  .page { padding: 2rem 1rem 3rem; }
+  .page { padding: 1.5rem 1rem 3rem; }
   .card { padding: 1.5rem 1rem; }
   .card .sprite { font-size: 0.85rem; }
   .card .species-name { font-size: 1.3rem; }
@@ -499,52 +526,59 @@ body {
     <p class="tagline">Your buddy, your rules.</p>
   </header>
 
-  <!-- Companion Card -->
-  <div class="card-stage" id="card-stage">
-    <div class="card r-common" id="card">
-      <div class="rarity-badge" id="c-rarity" style="color:var(--common)">COMMON</div>
-      <div class="stars" id="c-stars" style="color:var(--common)">★</div>
-      <pre class="sprite" id="c-sprite" style="color:var(--common)">
+  <!-- Hero: Card + Sidebar -->
+  <div class="hero">
+    <div class="hero-left">
+      <!-- Companion Card -->
+      <div class="card-stage" id="card-stage">
+        <div class="card r-common" id="card">
+          <div class="rarity-badge" id="c-rarity" style="color:var(--common)">COMMON</div>
+          <div class="stars" id="c-stars" style="color:var(--common)">★</div>
+          <pre class="sprite" id="c-sprite" style="color:var(--common)">
    .----.
   ( ·  · )
   (      )
    `----´</pre>
-      <div class="species-name" id="c-species" style="color:var(--common)">...</div>
-      <div id="c-shiny"></div>
-      <div class="card-meta" id="c-meta"></div>
+          <div class="species-name" id="c-species" style="color:var(--common)">...</div>
+          <div id="c-shiny"></div>
+          <div class="card-meta" id="c-meta"></div>
+        </div>
+      </div>
     </div>
-  </div>
 
-  <!-- Stats -->
-  <div class="stats" id="stats"></div>
+    <div class="hero-right">
+      <!-- Stats -->
+      <div class="stats" id="stats"></div>
 
-  <!-- Controls -->
-  <div class="controls">
-    <button class="roll-btn" id="roll-btn">Roll a Buddy</button>
-    <div class="filter-row">
-      <select id="f-rarity">
-        <option value="">Any rarity</option>
-        <option value="common">★ Common</option>
-        <option value="uncommon">★★ Uncommon</option>
-        <option value="rare">★★★ Rare</option>
-        <option value="epic">★★★★ Epic</option>
-        <option value="legendary">★★★★★ Legendary</option>
-      </select>
-      <select id="f-species"></select>
-      <label><input type="checkbox" id="f-shiny"> ✨ Shiny</label>
-    </div>
-    <div class="roll-info" id="roll-info"></div>
-  </div>
+      <!-- Controls -->
+      <div class="controls">
+        <button class="roll-btn" id="roll-btn">Roll a Buddy</button>
+        <div class="filter-row">
+          <select id="f-rarity">
+            <option value="">Any rarity</option>
+            <option value="common">★ Common</option>
+            <option value="uncommon">★★ Uncommon</option>
+            <option value="rare">★★★ Rare</option>
+            <option value="epic">★★★★ Epic</option>
+            <option value="legendary">★★★★★ Legendary</option>
+          </select>
+          <select id="f-species"></select>
+          <label><input type="checkbox" id="f-shiny"> ✨ Shiny</label>
+        </div>
+        <div class="roll-info" id="roll-info"></div>
+      </div>
 
-  <!-- Personalize (collapsible) -->
-  <div class="personalize">
-    <button class="personalize-toggle" id="perso-toggle">Find YOUR buddy</button>
-    <div class="personalize-body" id="perso-body">
-      <p>Enter your Claude Code <code>accountUuid</code> to see your current companion and bruteforce a custom salt.</p>
-      <p><code>cat ~/.claude.json | grep accountUuid</code></p>
-      <div class="uuid-row">
-        <input type="text" id="uuid-input" placeholder="accountUuid..." spellcheck="false" autocomplete="off">
-        <button id="uuid-go">Load</button>
+      <!-- Personalize (collapsible) -->
+      <div class="personalize">
+        <button class="personalize-toggle" id="perso-toggle">Find YOUR buddy</button>
+        <div class="personalize-body" id="perso-body">
+          <p>Enter your Claude Code <code>accountUuid</code> to see your current companion and bruteforce a custom salt.</p>
+          <p><code>cat ~/.claude.json | grep accountUuid</code></p>
+          <div class="uuid-row">
+            <input type="text" id="uuid-input" placeholder="accountUuid..." spellcheck="false" autocomplete="off">
+            <button id="uuid-go">Load</button>
+          </div>
+        </div>
       </div>
     </div>
   </div>
