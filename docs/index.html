@@ -4,921 +4,880 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Buddy Patcher — Your buddy, your rules.</title>
-<meta name="description" content="Preview and reroll your Claude Code companion. Bruteforce the perfect buddy.">
+<meta name="description" content="Roll, preview, and reroll your Claude Code companion. Gacha-style buddy generator.">
+<meta property="og:title" content="Buddy Patcher">
+<meta property="og:description" content="Your buddy, your rules. Roll your perfect Claude Code companion.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Sora:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
-/* ── Reset & Base ──────────────────────────────────────────── */
+/* ═══════════════════════════════════════════════════════════
+   BUDDY PATCHER — Gacha-style companion roller
+   Design: Hero-centric, single column, generous whitespace
+   ═══════════════════════════════════════════════════════════ */
+
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 :root {
-  --bg: #0f1219;
-  --bg-gradient: linear-gradient(180deg, #0f1219 0%, #131825 50%, #0f1219 100%);
-  --surface: #1a1f2e;
-  --surface-hover: #222840;
-  --border: #2a3147;
-  --text: #c8d1db;
-  --text-muted: #5c6578;
-  --common: #6b7280;
-  --uncommon: #34d399;
-  --rare: #60a5fa;
-  --epic: #c084fc;
-  --legendary: #fbbf24;
-  --accent: #34d399;
-  --accent-dim: #1a3a2e;
-  --danger: #f87171;
+  --bg: #0b0e14;
+  --surface: #141820;
+  --surface-raised: #1c2130;
+  --border: #252d3f;
+  --text: #c4cdd9;
+  --text-muted: #556070;
+  --common: #7a8494;
+  --uncommon: #2dd4a0;
+  --rare: #5b9cf5;
+  --epic: #b07cf5;
+  --legendary: #f5b83d;
+  --accent: #2dd4a0;
   --font-mono: 'JetBrains Mono', monospace;
-  --font-display: 'Outfit', sans-serif;
+  --font-display: 'Sora', sans-serif;
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
   --ease-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 html { scroll-behavior: smooth; }
-
 body {
   font-family: var(--font-mono);
   background: var(--bg);
   color: var(--text);
   min-height: 100vh;
   overflow-x: hidden;
-  line-height: 1.6;
 }
 
-/* ── Noise overlay ─────────────────────────────────────────── */
-body::before {
-  content: '';
-  position: fixed;
-  inset: 0;
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
-  pointer-events: none;
-  z-index: 999;
+/* ── Particles background ─────────────────────────────────── */
+.particles {
+  position: fixed; inset: 0; z-index: 0; overflow: hidden; pointer-events: none;
+}
+.particle {
+  position: absolute;
+  width: 2px; height: 2px;
+  background: var(--accent);
+  border-radius: 50%;
+  opacity: 0;
+  animation: particleFloat var(--dur, 14s) linear infinite;
+  animation-delay: var(--delay, 0s);
+}
+@keyframes particleFloat {
+  0%   { transform: translateY(100vh) translateX(0); opacity: 0; }
+  8%   { opacity: 0.15; }
+  85%  { opacity: 0.15; }
+  100% { transform: translateY(-40px) translateX(var(--drift, 20px)); opacity: 0; }
+}
+.particles.burst .particle {
+  animation-duration: 3s !important;
+  opacity: 0.5 !important;
 }
 
-/* ── Header ────────────────────────────────────────────────── */
+/* ── Grid overlay ─────────────────────────────────────────── */
+.grid-bg {
+  position: fixed; inset: 0; z-index: 0; pointer-events: none;
+  background-image:
+    linear-gradient(rgba(45,212,160,0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(45,212,160,0.03) 1px, transparent 1px);
+  background-size: 48px 48px;
+}
+
+/* ── Page container ───────────────────────────────────────── */
+.page {
+  position: relative; z-index: 1;
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 3rem 1.5rem 4rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2.5rem;
+}
+
+/* ── Header ───────────────────────────────────────────────── */
 .header {
   text-align: center;
-  padding: 3rem 1.5rem 2rem;
-  animation: fadeUp 600ms var(--ease-out) both;
+  animation: fadeUp 700ms var(--ease-out) both;
 }
 .header h1 {
   font-family: var(--font-display);
-  font-size: clamp(2rem, 5vw, 3.5rem);
+  font-size: clamp(2.2rem, 6vw, 3.5rem);
   font-weight: 800;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.03em;
   color: #fff;
-  margin-bottom: 0.25rem;
 }
 .header h1 span { color: var(--accent); }
 .header .tagline {
   font-family: var(--font-display);
   color: var(--text-muted);
-  font-size: 1.1rem;
+  font-size: 0.95rem;
   font-weight: 400;
+  margin-top: 0.25rem;
+  letter-spacing: 0.06em;
 }
 
-/* ── UUID Input ────────────────────────────────────────────── */
-.uuid-section {
-  max-width: 600px;
-  margin: 0 auto 2rem;
-  padding: 0 1.5rem;
-  animation: fadeUp 600ms 80ms var(--ease-out) both;
-}
-.uuid-input-wrap {
-  display: flex;
-  gap: 0.5rem;
-}
-.uuid-input-wrap input {
-  flex: 1;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  color: var(--text);
-  font-family: var(--font-mono);
-  font-size: 0.85rem;
-  padding: 0.75rem 1rem;
-  border-radius: 8px;
-  outline: none;
-  transition: border-color 300ms;
-}
-.uuid-input-wrap input:focus { border-color: var(--accent); }
-.uuid-input-wrap input::placeholder { color: var(--text-muted); }
-.uuid-input-wrap button {
-  background: var(--accent);
-  color: var(--bg);
-  font-family: var(--font-display);
-  font-weight: 600;
-  font-size: 0.9rem;
-  padding: 0.75rem 1.5rem;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: transform 150ms, opacity 150ms;
-  white-space: nowrap;
-}
-.uuid-input-wrap button:hover { opacity: 0.9; transform: scale(1.02); }
-.uuid-help {
-  font-size: 0.75rem;
-  color: var(--text-muted);
-  margin-top: 0.5rem;
-}
-.uuid-help code { color: var(--accent); }
-
-/* ── Gacha Lab ─────────────────────────────────────────────── */
-.gacha-lab {
-  max-width: 1100px;
-  margin: 0 auto 3rem;
-  padding: 0 1.5rem;
-  display: none;
-}
-.gacha-lab.active { display: block; }
-.gacha-lab .lab-grid {
-  display: grid;
-  grid-template-columns: 200px 1fr 200px;
-  gap: 1.5rem;
-  align-items: start;
-}
-
-/* ── Filters panel ──── */
-.filters-panel {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 1.25rem;
-  animation: fadeUp 600ms 160ms var(--ease-out) both;
-}
-.filters-panel h3 {
-  font-family: var(--font-display);
-  font-size: 0.8rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--text-muted);
-  margin-bottom: 1rem;
-}
-.filter-group { margin-bottom: 1rem; }
-.filter-group label {
-  display: block;
-  font-size: 0.75rem;
-  color: var(--text-muted);
-  margin-bottom: 0.35rem;
-}
-.filter-group select, .filter-group input[type="checkbox"] {
-  font-family: var(--font-mono);
-}
-.filter-group select {
+/* ── Card Stage ───────────────────────────────────────────── */
+.card-stage {
+  perspective: 900px;
   width: 100%;
-  background: var(--bg);
-  border: 1px solid var(--border);
-  color: var(--text);
-  padding: 0.5rem;
-  border-radius: 6px;
-  font-size: 0.8rem;
-  outline: none;
-  cursor: pointer;
+  max-width: 380px;
+  animation: fadeUp 700ms 100ms var(--ease-out) both;
 }
-.filter-group select:focus { border-color: var(--accent); }
-.shiny-toggle {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  cursor: pointer;
-  font-size: 0.85rem;
-}
-.shiny-toggle input { accent-color: var(--legendary); width: 16px; height: 16px; }
 
-.roll-btn {
+.card {
   width: 100%;
-  padding: 0.85rem;
-  margin-top: 0.5rem;
-  background: linear-gradient(135deg, var(--accent), #22b07a);
-  color: var(--bg);
-  font-family: var(--font-display);
-  font-weight: 700;
-  font-size: 1rem;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: transform 150ms var(--ease-bounce), box-shadow 300ms;
-  position: relative;
-  overflow: hidden;
-}
-.roll-btn:hover { transform: scale(1.03); box-shadow: 0 0 20px rgba(52, 211, 153, 0.3); }
-.roll-btn:active { transform: scale(0.97); }
-.roll-btn.hunting { background: var(--legendary); animation: pulse 1s infinite; }
-
-.roll-counter {
-  text-align: center;
-  font-size: 0.7rem;
-  color: var(--text-muted);
-  margin-top: 0.5rem;
-  min-height: 1em;
-}
-
-/* ── Companion Card ──── */
-.companion-card {
-  background: var(--surface);
+  background: linear-gradient(170deg, var(--surface-raised) 0%, var(--surface) 100%);
   border: 2px solid var(--border);
   border-radius: 16px;
-  padding: 2rem 1.5rem;
+  padding: 2rem 1.5rem 1.75rem;
   text-align: center;
-  min-height: 340px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  transition: border-color 500ms, box-shadow 500ms;
-  animation: fadeUp 600ms 240ms var(--ease-out) both;
   position: relative;
   overflow: hidden;
+  will-change: transform, opacity;
+  transition: border-color 0.5s, box-shadow 0.5s;
 }
-.companion-card.empty {
-  border-style: dashed;
-  color: var(--text-muted);
-  font-style: italic;
+.card::before {
+  content: ''; position: absolute; inset: 0;
+  background: repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(255,255,255,0.006) 3px, rgba(255,255,255,0.006) 6px);
+  pointer-events: none; border-radius: 14px;
 }
-.companion-card .rarity-badge {
+
+.card .rarity-badge {
   font-family: var(--font-display);
   font-weight: 700;
-  font-size: 0.8rem;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  margin-bottom: 0.25rem;
-}
-.companion-card .stars { font-size: 1rem; margin-bottom: 0.75rem; }
-.companion-card .sprite {
-  font-size: 1rem;
-  line-height: 1.25;
-  white-space: pre;
-  margin-bottom: 0.75rem;
-}
-.companion-card .species-name {
-  font-family: var(--font-display);
-  font-weight: 700;
-  font-size: 1.4rem;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-.companion-card .shiny-badge {
-  display: inline-block;
   font-size: 0.75rem;
-  padding: 0.15rem 0.6rem;
-  border-radius: 20px;
-  background: linear-gradient(135deg, #fbbf24, #f472b6, #60a5fa);
-  color: #000;
-  font-weight: 700;
-  margin-top: 0.35rem;
-  animation: shimmer 2s linear infinite;
-  background-size: 200% 100%;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
 }
-.companion-card .salt-label {
+.card .stars { font-size: 1.1rem; margin: 0.15rem 0 1rem; }
+.card .sprite {
+  font-size: 1.05rem;
+  line-height: 1.3;
+  white-space: pre;
+}
+.card .species-name {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 1.6rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-top: 0.75rem;
+}
+.card .shiny-badge {
+  display: inline-block;
+  font-size: 0.7rem; font-weight: 700;
+  padding: 0.15rem 0.7rem;
+  border-radius: 20px;
+  background: linear-gradient(135deg, #f5b83d, #f472b6, #5b9cf5);
+  background-size: 200% 100%;
+  color: #000;
+  margin-top: 0.4rem;
+  animation: shimmer 3s linear infinite;
+}
+.card .card-meta {
   font-size: 0.7rem;
   color: var(--text-muted);
-  margin-top: 0.75rem;
-  word-break: break-all;
+  margin-top: 1rem;
+  display: flex; gap: 1rem; justify-content: center;
 }
 
-/* Rarity glow effects */
-.companion-card.rarity-common { border-color: var(--common); }
-.companion-card.rarity-uncommon { border-color: var(--uncommon); box-shadow: 0 0 20px rgba(52,211,153,0.1); }
-.companion-card.rarity-rare { border-color: var(--rare); box-shadow: 0 0 25px rgba(96,165,250,0.15); }
-.companion-card.rarity-epic { border-color: var(--epic); box-shadow: 0 0 30px rgba(192,132,252,0.2); }
-.companion-card.rarity-legendary { border-color: var(--legendary); box-shadow: 0 0 40px rgba(251,191,36,0.25); animation: legendaryGlow 2s ease-in-out infinite; }
-
-/* ── Stats Panel ──── */
-.stats-panel {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 1.25rem;
-  animation: fadeUp 600ms 320ms var(--ease-out) both;
+/* ── Rarity card styles ───────────────────────────────────── */
+.card.r-common   { border-color: var(--common); }
+.card.r-uncommon { border-color: var(--uncommon); box-shadow: 0 0 20px rgba(45,212,160,0.1); }
+.card.r-rare     { border-color: var(--rare); box-shadow: 0 0 30px rgba(91,156,245,0.15); }
+.card.r-epic     { border-color: var(--epic); box-shadow: 0 0 35px rgba(176,124,245,0.2); }
+.card.r-legendary {
+  border-color: var(--legendary);
+  box-shadow: 0 0 50px rgba(245,184,61,0.25), 0 0 100px rgba(245,184,61,0.1);
+  animation: legendaryPulse 2.5s ease-in-out infinite;
 }
-.stats-panel h3 {
-  font-family: var(--font-display);
-  font-size: 0.8rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--text-muted);
-  margin-bottom: 1rem;
+
+/* ── Stats ────────────────────────────────────────────────── */
+.stats {
+  width: 100%;
+  max-width: 380px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  animation: fadeUp 700ms 200ms var(--ease-out) both;
 }
 .stat-row {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  margin-bottom: 0.6rem;
-  font-size: 0.75rem;
+  display: flex; align-items: center; gap: 0.6rem;
+  font-size: 0.7rem;
 }
-.stat-name { width: 80px; color: var(--text-muted); }
+.stat-name { width: 80px; color: var(--text-muted); letter-spacing: 0.04em; }
 .stat-bar {
-  flex: 1;
-  height: 8px;
-  background: var(--bg);
-  border-radius: 4px;
+  flex: 1; height: 6px;
+  background: rgba(255,255,255,0.04);
+  border-radius: 3px;
   overflow: hidden;
 }
 .stat-bar-fill {
-  height: 100%;
-  border-radius: 4px;
-  transition: width 600ms var(--ease-out);
-  width: 0%;
+  height: 100%; border-radius: 3px;
+  transform-origin: left;
+  transform: scaleX(0);
+  transition: transform 600ms var(--ease-out);
+  transition-delay: var(--delay, 0ms);
 }
-.stat-value { width: 28px; text-align: right; font-weight: 600; }
-.stat-details {
-  margin-top: 1rem;
-  padding-top: 0.75rem;
-  border-top: 1px solid var(--border);
-  font-size: 0.75rem;
-  color: var(--text-muted);
-}
-.stat-details div { margin-bottom: 0.25rem; }
-.stat-details span { color: var(--text); }
+.stat-bar-fill.animate { transform: scaleX(var(--pct)); }
+.stat-value { width: 24px; text-align: right; font-weight: 600; }
 
-/* ── Previous Rolls ────────────────────────────────────────── */
-.prev-rolls {
-  max-width: 1100px;
-  margin: 0 auto 2rem;
-  padding: 0 1.5rem;
-  display: none;
-}
-.prev-rolls.active { display: block; }
-.prev-rolls h3 {
-  font-family: var(--font-display);
-  font-size: 0.8rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--text-muted);
-  margin-bottom: 0.75rem;
-}
-.prev-rolls-grid {
+/* ── Controls ─────────────────────────────────────────────── */
+.controls {
+  width: 100%;
+  max-width: 380px;
   display: flex;
-  gap: 0.5rem;
-  flex-wrap: wrap;
+  flex-direction: column;
+  gap: 0.75rem;
+  animation: fadeUp 700ms 300ms var(--ease-out) both;
 }
-.prev-roll-chip {
+.roll-btn {
+  width: 100%;
+  padding: 1rem;
+  background: linear-gradient(135deg, var(--accent), #1fb885);
+  color: var(--bg);
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1.1rem;
+  letter-spacing: 0.02em;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: transform 120ms var(--ease-bounce), box-shadow 300ms;
+  position: relative;
+}
+.roll-btn:hover { transform: scale(1.02); box-shadow: 0 0 30px rgba(45,212,160,0.3); }
+.roll-btn:active { transform: scale(0.97); }
+.roll-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+.filter-row {
+  display: flex; gap: 0.5rem;
+}
+.filter-row select {
+  flex: 1;
   background: var(--surface);
   border: 1px solid var(--border);
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  padding: 0.5rem 0.6rem;
   border-radius: 8px;
-  padding: 0.4rem 0.75rem;
-  font-size: 0.7rem;
+  outline: none;
   cursor: pointer;
-  transition: border-color 200ms, transform 150ms;
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
 }
-.prev-roll-chip:hover { border-color: var(--accent); transform: translateY(-1px); }
-.prev-roll-chip .chip-stars { font-size: 0.65rem; }
+.filter-row select:focus { border-color: var(--accent); }
+.filter-row label {
+  display: flex; align-items: center; gap: 0.4rem;
+  font-size: 0.75rem; color: var(--text-muted);
+  cursor: pointer; white-space: nowrap;
+}
+.filter-row label input { accent-color: var(--legendary); width: 14px; height: 14px; }
 
-/* ── Patch Section ─────────────────────────────────────────── */
+.roll-info {
+  text-align: center;
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  min-height: 1.2em;
+}
+
+/* ── Personalize (collapsible) ────────────────────────────── */
+.personalize {
+  width: 100%;
+  max-width: 380px;
+}
+.personalize-toggle {
+  width: 100%;
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  color: var(--text-muted);
+  font-family: var(--font-display);
+  font-size: 0.8rem;
+  font-weight: 500;
+  padding: 0.7rem 1rem;
+  cursor: pointer;
+  transition: border-color 200ms, color 200ms;
+  text-align: left;
+}
+.personalize-toggle:hover { border-color: var(--accent); color: var(--text); }
+.personalize-toggle::after { content: ' +'; float: right; }
+.personalize-toggle.open::after { content: ' −'; }
+
+.personalize-body {
+  display: none;
+  margin-top: 0.75rem;
+}
+.personalize-body.open { display: block; }
+.personalize-body p {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin-bottom: 0.5rem;
+  line-height: 1.5;
+}
+.personalize-body code { color: var(--accent); font-size: 0.7rem; }
+.uuid-row {
+  display: flex; gap: 0.5rem;
+}
+.uuid-row input {
+  flex: 1;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  padding: 0.6rem 0.75rem;
+  border-radius: 8px;
+  outline: none;
+}
+.uuid-row input:focus { border-color: var(--accent); }
+.uuid-row input::placeholder { color: var(--text-muted); }
+.uuid-row button {
+  background: var(--accent); color: var(--bg);
+  font-family: var(--font-display); font-weight: 600; font-size: 0.8rem;
+  padding: 0.6rem 1.2rem;
+  border: none; border-radius: 8px; cursor: pointer;
+  white-space: nowrap;
+}
+
+/* ── Patch section ────────────────────────────────────────── */
 .patch-section {
-  max-width: 800px;
-  margin: 0 auto 3rem;
-  padding: 0 1.5rem;
+  width: 100%;
+  max-width: 480px;
   display: none;
 }
 .patch-section.active { display: block; }
 .patch-section h3 {
   font-family: var(--font-display);
-  font-size: 1rem;
-  font-weight: 600;
-  margin-bottom: 0.5rem;
+  font-size: 0.85rem; font-weight: 600;
+  margin-bottom: 0.5rem; color: #fff;
 }
-.patch-cmd {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 1rem;
-  font-size: 0.8rem;
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-}
-.patch-cmd code {
-  flex: 1;
-  word-break: break-all;
-  color: var(--accent);
-}
-.copy-btn {
-  background: var(--surface-hover);
-  border: 1px solid var(--border);
-  color: var(--text);
-  padding: 0.4rem 0.8rem;
-  border-radius: 6px;
-  cursor: pointer;
-  font-family: var(--font-mono);
-  font-size: 0.75rem;
-  white-space: nowrap;
-  transition: background 150ms, border-color 150ms;
-}
-.copy-btn:hover { background: var(--border); border-color: var(--accent); }
-.copy-btn.copied { background: var(--accent-dim); border-color: var(--accent); color: var(--accent); }
-
-/* ── Species Codex ─────────────────────────────────────────── */
-.codex-section {
-  max-width: 1100px;
-  margin: 0 auto 3rem;
-  padding: 0 1.5rem;
-}
-.codex-section h2 {
-  font-family: var(--font-display);
-  font-weight: 700;
-  font-size: 1.5rem;
-  margin-bottom: 0.25rem;
-  color: #fff;
-}
-.codex-section .codex-subtitle {
-  color: var(--text-muted);
-  font-size: 0.85rem;
-  margin-bottom: 1.5rem;
-}
-.codex-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-  gap: 0.75rem;
-}
-.codex-card {
+.patch-box {
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 10px;
-  padding: 1rem 0.5rem 0.75rem;
-  text-align: center;
-  cursor: pointer;
-  transition: border-color 200ms, transform 200ms var(--ease-bounce), box-shadow 200ms;
+  padding: 0.85rem 1rem;
+  display: flex; align-items: center; gap: 0.6rem;
+  font-size: 0.72rem;
 }
-.codex-card:hover {
-  border-color: var(--accent);
-  transform: translateY(-3px);
-  box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+.patch-box code { flex: 1; word-break: break-all; color: var(--accent); line-height: 1.5; }
+.copy-btn {
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  color: var(--text); font-family: var(--font-mono);
+  font-size: 0.7rem; padding: 0.35rem 0.75rem;
+  border-radius: 6px; cursor: pointer; white-space: nowrap;
+  transition: border-color 150ms;
 }
-.codex-card .codex-sprite {
-  font-size: 0.65rem;
-  line-height: 1.2;
-  white-space: pre;
-  color: var(--text-muted);
-  margin-bottom: 0.5rem;
-  transition: color 200ms;
+.copy-btn:hover { border-color: var(--accent); }
+.copy-btn.copied { border-color: var(--accent); color: var(--accent); }
+.patch-note {
+  font-size: 0.7rem; color: var(--text-muted); margin-top: 0.5rem;
 }
-.codex-card:hover .codex-sprite { color: var(--text); }
-.codex-card .codex-name {
-  font-family: var(--font-display);
-  font-size: 0.8rem;
-  font-weight: 600;
-  text-transform: capitalize;
-}
+.patch-note code { color: var(--accent); }
 
-/* ── Footer ────────────────────────────────────────────────── */
+/* ── Footer ───────────────────────────────────────────────── */
 .footer {
   text-align: center;
-  padding: 2rem 1.5rem 3rem;
+  font-size: 0.7rem;
   color: var(--text-muted);
-  font-size: 0.75rem;
+  margin-top: 1rem;
 }
 .footer a { color: var(--accent); text-decoration: none; }
 .footer a:hover { text-decoration: underline; }
 
-/* ── Animations ────────────────────────────────────────────── */
-@keyframes fadeUp {
-  from { opacity: 0; transform: translateY(16px); }
-  to { opacity: 1; transform: translateY(0); }
+/* ── Screen flash (legendary) ─────────────────────────────── */
+.screen-flash {
+  position: fixed; inset: 0; z-index: 100;
+  pointer-events: none; opacity: 0;
 }
-@keyframes legendaryGlow {
-  0%, 100% { box-shadow: 0 0 30px rgba(251,191,36,0.2); }
-  50% { box-shadow: 0 0 50px rgba(251,191,36,0.35); }
+.screen-flash.active {
+  animation: flash 600ms ease-out forwards;
 }
-@keyframes shimmer {
-  0% { background-position: 200% 0; }
-  100% { background-position: -200% 0; }
-}
-@keyframes pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.8; }
-}
-@keyframes rollBounce {
-  0% { transform: scale(1); }
-  15% { transform: scale(0.92) rotate(-2deg); }
-  40% { transform: scale(1.05) rotate(1deg); }
-  60% { transform: scale(0.98); }
-  100% { transform: scale(1); }
-}
-@keyframes revealStat {
-  from { width: 0%; }
+@keyframes flash {
+  0%   { opacity: 0; }
+  15%  { opacity: 0.4; }
+  100% { opacity: 0; }
 }
 
+/* ── Roll animations ──────────────────────────────────────── */
+@keyframes rollAnticipation {
+  0%   { transform: scale(1); }
+  30%  { transform: scale(0.88) rotate(-2deg); }
+  60%  { transform: scale(0.83) rotate(1.5deg); }
+  100% { transform: scale(0.8) rotate(0deg); }
+}
+@keyframes rollSuspense {
+  0%   { transform: scale(0.8); opacity: 1; }
+  50%  { transform: scale(0.75); opacity: 0; }
+  100% { transform: scale(0.85); opacity: 0; }
+}
+@keyframes revealCommon {
+  0%   { transform: scale(0.9); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+@keyframes revealUncommon {
+  0%   { transform: scale(0.9) translateY(20px); opacity: 0; }
+  60%  { transform: scale(1.02) translateY(-3px); opacity: 1; }
+  100% { transform: scale(1) translateY(0); opacity: 1; }
+}
+@keyframes revealRare {
+  0%   { transform: scale(0.3); opacity: 0; }
+  50%  { transform: scale(1.1); opacity: 1; }
+  75%  { transform: scale(0.96); }
+  100% { transform: scale(1); opacity: 1; }
+}
+@keyframes revealEpic {
+  0%   { transform: scale(0.1) rotate(-6deg); opacity: 0; }
+  40%  { transform: scale(1.12) rotate(1.5deg); opacity: 1; }
+  65%  { transform: scale(0.94) rotate(-0.5deg); }
+  100% { transform: scale(1) rotate(0deg); opacity: 1; }
+}
+@keyframes revealLegendary {
+  0%   { transform: scale(0) rotate(-12deg); opacity: 0; }
+  25%  { transform: scale(1.25) rotate(3deg); opacity: 1; }
+  45%  { transform: scale(0.88) rotate(-1.5deg); }
+  60%  { transform: scale(1.1) rotate(0.5deg); }
+  80%  { transform: scale(0.97); }
+  100% { transform: scale(1) rotate(0deg); opacity: 1; }
+}
+@keyframes legendaryPulse {
+  0%, 100% { box-shadow: 0 0 40px rgba(245,184,61,0.2), 0 0 80px rgba(245,184,61,0.08); }
+  50%      { box-shadow: 0 0 60px rgba(245,184,61,0.3), 0 0 120px rgba(245,184,61,0.12); }
+}
+@keyframes shimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Burst particles (JS-spawned) ─────────────────────────── */
+.burst-particle {
+  position: absolute;
+  width: 4px; height: 4px;
+  border-radius: 50%;
+  pointer-events: none;
+  animation: burstOut 800ms var(--ease-out) forwards;
+}
+@keyframes burstOut {
+  0%   { transform: translate(0,0) scale(1); opacity: 1; }
+  100% { transform: translate(var(--bx), var(--by)) scale(0); opacity: 0; }
+}
+
+/* ── Reduced motion ───────────────────────────────────────── */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: 0.01ms !important;
     transition-duration: 0.01ms !important;
   }
+  .particles, .grid-bg { display: none; }
 }
 
-/* ── Responsive ────────────────────────────────────────────── */
-@media (max-width: 820px) {
-  .gacha-lab .lab-grid {
-    grid-template-columns: 1fr;
-    gap: 1rem;
-  }
-  .filters-panel {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.75rem;
-    align-items: end;
-  }
-  .filters-panel h3 { width: 100%; margin-bottom: 0; }
-  .filter-group { flex: 1; min-width: 120px; margin-bottom: 0; }
-  .roll-btn { flex: none; width: auto; padding: 0.6rem 2rem; }
-  .companion-card { order: -1; }
-}
+/* ── Mobile ───────────────────────────────────────────────── */
 @media (max-width: 480px) {
-  .codex-grid { grid-template-columns: repeat(3, 1fr); gap: 0.5rem; }
-  .codex-card { padding: 0.6rem 0.25rem 0.5rem; }
-  .codex-sprite { font-size: 0.5rem !important; }
+  .page { padding: 2rem 1rem 3rem; }
+  .card { padding: 1.5rem 1rem; }
+  .card .sprite { font-size: 0.85rem; }
+  .card .species-name { font-size: 1.3rem; }
+  .filter-row { flex-wrap: wrap; }
 }
 </style>
 </head>
 <body>
 
-<!-- ── Header ──────────────────────────────────────────────── -->
-<header class="header">
-  <h1>🎲 Buddy <span>Patcher</span></h1>
-  <p class="tagline">Your buddy, your rules.</p>
-</header>
+<!-- Background layers -->
+<div class="particles" id="particles"></div>
+<div class="grid-bg"></div>
+<div class="screen-flash" id="screen-flash"></div>
 
-<!-- ── UUID Input ──────────────────────────────────────────── -->
-<section class="uuid-section">
-  <div class="uuid-input-wrap">
-    <input type="text" id="uuid-input" placeholder="Enter your accountUuid..." spellcheck="false" autocomplete="off">
-    <button id="uuid-go" disabled>Load</button>
-  </div>
-  <p class="uuid-help">
-    Find it: <code>cat ~/.claude.json | grep accountUuid</code>
-  </p>
-</section>
+<div class="page">
 
-<!-- ── Gacha Lab ───────────────────────────────────────────── -->
-<section class="gacha-lab" id="gacha-lab">
-  <div class="lab-grid">
+  <!-- Header -->
+  <header class="header">
+    <h1>Buddy <span>Patcher</span></h1>
+    <p class="tagline">Your buddy, your rules.</p>
+  </header>
 
-    <!-- Filters -->
-    <div class="filters-panel">
-      <h3>Hunt Filters</h3>
-      <div class="filter-group">
-        <label>Rarity</label>
-        <select id="filter-rarity">
-          <option value="">Any</option>
-          <option value="common">★ Common</option>
-          <option value="uncommon">★★ Uncommon</option>
-          <option value="rare">★★★ Rare</option>
-          <option value="epic">★★★★ Epic</option>
-          <option value="legendary">★★★★★ Legendary</option>
-        </select>
-      </div>
-      <div class="filter-group">
-        <label>Species</label>
-        <select id="filter-species">
-          <option value="">Any</option>
-        </select>
-      </div>
-      <div class="filter-group">
-        <label class="shiny-toggle">
-          <input type="checkbox" id="filter-shiny"> ✨ Shiny only
-        </label>
-      </div>
-      <button class="roll-btn" id="roll-btn">⚡ Roll</button>
-      <div class="roll-counter" id="roll-counter"></div>
+  <!-- Companion Card -->
+  <div class="card-stage" id="card-stage">
+    <div class="card r-common" id="card">
+      <div class="rarity-badge" id="c-rarity" style="color:var(--common)">COMMON</div>
+      <div class="stars" id="c-stars" style="color:var(--common)">★</div>
+      <pre class="sprite" id="c-sprite" style="color:var(--common)">
+   .----.
+  ( ·  · )
+  (      )
+   `----´</pre>
+      <div class="species-name" id="c-species" style="color:var(--common)">...</div>
+      <div id="c-shiny"></div>
+      <div class="card-meta" id="c-meta"></div>
     </div>
-
-    <!-- Companion Card -->
-    <div class="companion-card empty" id="companion-card">
-      <p>Enter your UUID and roll to find a companion</p>
-    </div>
-
-    <!-- Stats -->
-    <div class="stats-panel" id="stats-panel">
-      <h3>Stats</h3>
-      <div id="stats-bars"></div>
-      <div class="stat-details" id="stat-details"></div>
-    </div>
-
   </div>
-</section>
 
-<!-- ── Previous Rolls ──────────────────────────────────────── -->
-<section class="prev-rolls" id="prev-rolls">
-  <h3>Previous Rolls</h3>
-  <div class="prev-rolls-grid" id="prev-rolls-grid"></div>
-</section>
+  <!-- Stats -->
+  <div class="stats" id="stats"></div>
 
-<!-- ── Patch Command ───────────────────────────────────────── -->
-<section class="patch-section" id="patch-section">
-  <h3>Apply this companion</h3>
-  <div class="patch-cmd">
-    <code id="patch-cmd-text"></code>
-    <button class="copy-btn" id="copy-btn">Copy</button>
+  <!-- Controls -->
+  <div class="controls">
+    <button class="roll-btn" id="roll-btn">Roll a Buddy</button>
+    <div class="filter-row">
+      <select id="f-rarity">
+        <option value="">Any rarity</option>
+        <option value="common">★ Common</option>
+        <option value="uncommon">★★ Uncommon</option>
+        <option value="rare">★★★ Rare</option>
+        <option value="epic">★★★★ Epic</option>
+        <option value="legendary">★★★★★ Legendary</option>
+      </select>
+      <select id="f-species"></select>
+      <label><input type="checkbox" id="f-shiny"> ✨ Shiny</label>
+    </div>
+    <div class="roll-info" id="roll-info"></div>
   </div>
-  <p class="uuid-help" style="margin-top: 0.75rem;">
-    Or use the all-in-one CLI: <code>bun buddy.mjs --apply "&lt;salt&gt;"</code>
-  </p>
-</section>
 
-<!-- ── Species Codex ───────────────────────────────────────── -->
-<section class="codex-section">
-  <h2>Species Codex</h2>
-  <p class="codex-subtitle">18 species. 5 rarities. Infinite possibilities. Click one to hunt it.</p>
-  <div class="codex-grid" id="codex-grid"></div>
-</section>
+  <!-- Personalize (collapsible) -->
+  <div class="personalize">
+    <button class="personalize-toggle" id="perso-toggle">Find YOUR buddy</button>
+    <div class="personalize-body" id="perso-body">
+      <p>Enter your Claude Code <code>accountUuid</code> to see your current companion and bruteforce a custom salt.</p>
+      <p><code>cat ~/.claude.json | grep accountUuid</code></p>
+      <div class="uuid-row">
+        <input type="text" id="uuid-input" placeholder="accountUuid..." spellcheck="false" autocomplete="off">
+        <button id="uuid-go">Load</button>
+      </div>
+    </div>
+  </div>
 
-<!-- ── Footer ──────────────────────────────────────────────── -->
-<footer class="footer">
-  <p>
-    <a href="https://github.com/YohannHommet/buddy-patcher" target="_blank">GitHub</a> ·
-    Algorithm from <a href="https://github.com/zackautocracy/claude-code/tree/main/src/buddy" target="_blank">claude-code/buddy</a> ·
-    MIT License
-  </p>
-  <p style="margin-top: 0.5rem;">100% client-side. Your UUID never leaves your browser.</p>
-</footer>
+  <!-- Patch command -->
+  <section class="patch-section" id="patch-section">
+    <h3>Apply this companion</h3>
+    <div class="patch-box">
+      <code id="patch-cmd"></code>
+      <button class="copy-btn" id="copy-btn">Copy</button>
+    </div>
+    <p class="patch-note">Or use the CLI: <code>bun buddy.mjs --apply "&lt;salt&gt;"</code></p>
+  </section>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <p>
+      <a href="https://github.com/YohannHommet/buddy-patcher" target="_blank">GitHub</a> ·
+      Algorithm from <a href="https://github.com/zackautocracy/claude-code/tree/main/src/buddy" target="_blank">claude-code/buddy</a> ·
+      MIT License
+    </p>
+    <p style="margin-top:0.4rem">100% client-side. Your UUID never leaves your browser.</p>
+  </footer>
+
+</div>
 
 <script>
 // ══════════════════════════════════════════════════════════════
-//  Buddy Patcher — Web App
+//  Buddy Patcher — Web App v2
 // ══════════════════════════════════════════════════════════════
 
 // ── Sprites ─────────────────────────────────────────────────
 const BODIES = {
-  duck:     ['    __      ','  <({E} )___  ','   (  ._>   ','    `--´    '],
-  goose:    ['     ({E}>    ','     ||     ','   _(__)_   ','    ^^^^    '],
-  blob:     ['   .----.   ','  ( {E}  {E} )  ','  (      )  ','   `----´   '],
-  cat:      ['   /\\_/\\    ','  ( {E}   {E})  ','  (  ω  )   ','  (")_(")   '],
-  dragon:   ['  /^\\  /^\\  ',' <  {E}  {E}  > ',' (   ~~   ) ','  `-vvvv-´  '],
-  octopus:  ['   .----.   ','  ( {E}  {E} )  ','  (______)  ','  /\\/\\/\\/\\  '],
-  owl:      ['   /\\  /\\   ','  (({E})({E}))  ','  (  ><  )  ','   `----´   '],
-  penguin:  ['  .---.     ','  ({E}>{E})     ',' /(   )\\    ','  `---´     '],
-  turtle:   ['   _,--._   ','  ( {E}  {E} )  ',' /[______]\\ ','  ``    ``  '],
-  snail:    [' {E}    .--.  ','  \\  ( @ )  ','   \\_`--´   ','  ~~~~~~~   '],
-  ghost:    ['   .----.   ','  / {E}  {E} \\  ','  |      |  ','  ~`~``~`~  '],
-  axolotl:  ['}~(______)~{','}~({E} .. {E})~{','  ( .--. )  ','  (_/  \\_)  '],
-  capybara: ['  n______n  ',' ( {E}    {E} ) ',' (   oo   ) ','  `------´  '],
-  cactus:   [' n  ____  n ',' | |{E}  {E}| | ',' |_|    |_| ','   |    |   '],
-  robot:    ['   .[||].   ','  [ {E}  {E} ]  ','  [ ==== ]  ','  `------´  '],
-  rabbit:   ['   (\\__/)   ','  ( {E}  {E} )  ',' =(  ..  )= ','  (")__(")  '],
-  mushroom: [' .-o-OO-o-. ','(__________)','   |{E}  {E}|   ','   |____|   '],
-  chonk:    ['  /\\    /\\  ',' ( {E}    {E} ) ',' (   ..   ) ','  `------´  '],
+  duck:['    __      ','  <({E} )___  ','   (  ._>   ','    `--´    '],
+  goose:['     ({E}>    ','     ||     ','   _(__)_   ','    ^^^^    '],
+  blob:['   .----.   ','  ( {E}  {E} )  ','  (      )  ','   `----´   '],
+  cat:['   /\\_/\\    ','  ( {E}   {E})  ','  (  ω  )   ','  (")_(")   '],
+  dragon:['  /^\\  /^\\  ',' <  {E}  {E}  > ',' (   ~~   ) ','  `-vvvv-´  '],
+  octopus:['   .----.   ','  ( {E}  {E} )  ','  (______)  ','  /\\/\\/\\/\\  '],
+  owl:['   /\\  /\\   ','  (({E})({E}))  ','  (  ><  )  ','   `----´   '],
+  penguin:['  .---.     ','  ({E}>{E})     ',' /(   )\\    ','  `---´     '],
+  turtle:['   _,--._   ','  ( {E}  {E} )  ',' /[______]\\ ','  ``    ``  '],
+  snail:[' {E}    .--.  ','  \\  ( @ )  ','   \\_`--´   ','  ~~~~~~~   '],
+  ghost:['   .----.   ','  / {E}  {E} \\  ','  |      |  ','  ~`~``~`~  '],
+  axolotl:['}~(______)~{','}~({E} .. {E})~{','  ( .--. )  ','  (_/  \\_)  '],
+  capybara:['  n______n  ',' ( {E}    {E} ) ',' (   oo   ) ','  `------´  '],
+  cactus:[' n  ____  n ',' | |{E}  {E}| | ',' |_|    |_| ','   |    |   '],
+  robot:['   .[||].   ','  [ {E}  {E} ]  ','  [ ==== ]  ','  `------´  '],
+  rabbit:['   (\\__/)   ','  ( {E}  {E} )  ',' =(  ..  )= ','  (")__(")  '],
+  mushroom:[' .-o-OO-o-. ','(__________)','   |{E}  {E}|   ','   |____|   '],
+  chonk:['  /\\    /\\  ',' ( {E}    {E} ) ',' (   ..   ) ','  `------´  '],
 };
 const HAT_LINES = {none:'',crown:'   \\^^^/    ',tophat:'   [___]    ',propeller:'    -+-     ',halo:'   (   )    ',wizard:'    /^\\     ',beanie:'   (___)    ',tinyduck:'    ,>      '};
 const SPECIES = Object.keys(BODIES);
 const RARITIES = ['common','uncommon','rare','epic','legendary'];
 const RARITY_STARS = {common:'★',uncommon:'★★',rare:'★★★',epic:'★★★★',legendary:'★★★★★'};
-const RARITY_COLORS = {common:'var(--common)',uncommon:'var(--uncommon)',rare:'var(--rare)',epic:'var(--epic)',legendary:'var(--legendary)'};
+const RARITY_CSS = {common:'var(--common)',uncommon:'var(--uncommon)',rare:'var(--rare)',epic:'var(--epic)',legendary:'var(--legendary)'};
 const STAT_NAMES = ['DEBUGGING','PATIENCE','CHAOS','WISDOM','SNARK'];
+const REVEAL_DURATION = {common:350,uncommon:400,rare:450,epic:500,legendary:700};
 
-function renderSprite(bones) {
-  const lines = BODIES[bones.species].map(l => l.replaceAll('{E}', bones.eye));
-  if (bones.hat !== 'none') lines.unshift(HAT_LINES[bones.hat]);
+function renderSprite(b) {
+  const lines = BODIES[b.species].map(l => l.replaceAll('{E}', b.eye));
+  if (b.hat !== 'none') lines.unshift(HAT_LINES[b.hat]);
   return lines.join('\n');
 }
-function renderCodexSprite(species) {
-  return BODIES[species].map(l => l.replaceAll('{E}', '·')).join('\n');
-}
 
-// ── WASM base64 ─────────────────────────────────────────────
+// ── WASM ────────────────────────────────────────────────────
 const WASM_B64 = `AGFzbQEAAAABTwtgBH9/f38Bf2AFf39/f38AYAF/AX9gA39/fgF+YAN/f38AYAJ/fwF/YAJ+fgF+YAR/f35+AGADf39/AX9gBn9/f39/fwF/YAV/fn5+fgADFBMCAwQFBQUCAwYHCAgDAAIJAQoIBAUBcAEEBAUDAQARBgkBfwFBgIDAAAsHbgoGbWVtb3J5AgAFYWxsb2MAAAZ3eWhhc2gAAQdhZGxlcjMyAAMFY3JjMzIABApjaXR5aGFzaDMyAAUKY2l0eWhhc2g2NAAHCm11cm11cjMydjMACgptdXJtdXIzMnYyAAsKbXVybXVyNjR2MgAMCQkBAEEBCwMNDxAKtjITQQEBfgJAIAANAEF/DwsCQEEAKQOQgMCAACIBpyAAQQBBACABQiCIpygCABGAgICAAAAiAEUNACAADwsDfwAMAAsL/QUFAn8BfgF/AX4CfyOAgICAAEHwAGsiAySAgICAACADQeAAaiACQq/I9cXHrIe7oH+FQgBC29HQhZra34FnQgAQkYCAgAAgA0HoAGopAwAgAykDYIUgAoUhAgJAAkACQAJAAkAgAUEQSw0AIAFBA00NASAANQAAQiCGIAAgAUEBdkH8////B3EiBGo1AACEIQUgACABQXxqIgZqNQAAQiCGIAAgBiAEa2o1AACEIQcMBAtBACEEIAFBME8NAUEAIQYMAgtCACEHAkAgAQ0AQgAhBQwDCyAAIAFBAXZqMQAAQgiGIAAxAABCEIaEIAEgAGpBf2oxAACEIQUMAgtBACEGIAIhBSACIQcCQANAIAZBMGoiCCABTw0BIANBwABqIAAgBmoiBikACCAHhUIAIAYpAABC29HQhZra34FnhUIAEJGAgIAAIANBMGogBkEYaikAACAFhUIAIAZBEGopAABC442j5Inemt6Of4VCABCRgICAACADQSBqIAZBKGopAAAgAoVCACAGQSBqKQAAQsOZ3anHudnM2ACFQgAQkYCAgAAgA0HAAGpBCGopAwAgAykDQIUhByADQSBqQQhqKQMAIAMpAyCFIQIgA0EwakEIaikDACADKQMwhSEFIAghBgwACwsgBSAChSAHhSECCyAAIAZqIQkgASAGayEIAkADQCAEQRBqIgYgCE8NASADQdAAaiAJIARqIgRBCGopAAAgAoVCACAEKQAAQtvR0IWa2t+BZ4VCABCRgICAACADQdAAakEIaikDACADKQNQhSECIAYhBAwACwsgASAAaiIEQXhqKQAAIQcgBEFwaikAACEFCyADQRBqIAVC29HQhZra34FnhUIAIAcgAoVCABCRgICAACADIANBEGpBCGopAwBC29HQhZra34FnhUIAIAGtIAMpAxCFQq/I9cXHrIe7oH+FQgAQkYCAgABBkIDAgAAgACABEIKAgIAAIANBCGopAwAhAiADKQMAIQUgA0HwAGokgICAgAAgAiAFhQs4AQF/AkAgAkEAIAIbIgNFDQAgACgCACABQarVqtV6IAIbIANBAEEAIAAoAgQoAggRgYCAgAAACwujBgEGfwJAAkAgAUEBRw0AIAAtAABBAWoiAiEDDAELAkACQCABQRBJDQBBACEEIAAhBUEAIQJBASEDDAELQQAhBSABIQQgACEGQQEhAgJAA0AgBEUNASAEQX9qIQQgAiAGLQAAaiICIAVqIQUgBkEBaiEGDAALCyACQY+AfGogAiACQfD/A0sbIQMgBUHx/wNwIQIMAQsDQAJAAkAgBEGwK2oiByABSw0AQQAhBgNAIAZBsCtGDQIgAyAFIAZqIgQtAABqIgMgAmogAyAEQQFqLQAAaiICaiACIARBAmotAABqIgJqIAIgBEEDai0AAGoiAmogAiAEQQRqLQAAaiICaiACIARBBWotAABqIgJqIAIgBEEGai0AAGoiAmogAiAEQQdqLQAAaiICaiACIARBCGotAABqIgJqIAIgBEEJai0AAGoiAmogAiAEQQpqLQAAaiICaiACIARBC2otAABqIgJqIAIgBEEMai0AAGoiAmogAiAEQQ1qLQAAaiICaiACIARBDmotAABqIgJqIAIgBEEPai0AAGoiA2ohAiAGQRBqIQYMAAsLIAQgAU8NAgNAAkAgBEEQaiIGIAFNDQACQANAIAQgAU8NASADIAAgBGotAABqIgMgAmohAiAEQQFqIQQMAAsLIAJB8f8DcCECIANB8f8DcCEDDAQLIAMgACAEaiIELQAAaiIDIAJqIAMgBEEBai0AAGoiAmogAiAEQQJqLQAAaiICaiACIARBA2otAABqIgJqIAIgBEEEai0AAGoiAmogAiAEQQVqLQAAaiICaiACIARBBmotAABqIgJqIAIgBEEHai0AAGoiAmogAiAEQQhqLQAAaiICaiACIARBCWotAABq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`;
 
-// ── Worker ──────────────────────────────────────────────────
+// ── State ───────────────────────────────────────────────────
 let worker = null;
-let currentBones = null;
-let currentSalt = null;
 let userId = null;
-let rollHistory = [];
+let currentSalt = null;
+let isRolling = false;
+let rollCount = 0;
 
-function initWorker() {
-  worker = new Worker('worker.js');
-  worker.postMessage({ type: 'init', wasmBase64: WASM_B64 });
-  return new Promise(resolve => {
-    worker.onmessage = (e) => {
-      if (e.data.type === 'ready') resolve();
-    };
-  });
+// ── DOM ─────────────────────────────────────────────────────
+const $ = id => document.getElementById(id);
+const $card = $('card');
+const $stage = $('card-stage');
+const $stats = $('stats');
+const $rollBtn = $('roll-btn');
+const $rollInfo = $('roll-info');
+const $flash = $('screen-flash');
+const $patchSection = $('patch-section');
+const $patchCmd = $('patch-cmd');
+const $particles = $('particles');
+
+// ── Init particles ──────────────────────────────────────────
+for (let i = 0; i < 25; i++) {
+  const p = document.createElement('div');
+  p.className = 'particle';
+  p.style.left = Math.random() * 100 + '%';
+  p.style.setProperty('--dur', (10 + Math.random() * 10) + 's');
+  p.style.setProperty('--delay', (Math.random() * -15) + 's');
+  p.style.setProperty('--drift', (Math.random() * 50 - 25) + 'px');
+  $particles.appendChild(p);
 }
 
-// ── DOM refs ────────────────────────────────────────────────
-const $uuid = document.getElementById('uuid-input');
-const $uuidGo = document.getElementById('uuid-go');
-const $gachaLab = document.getElementById('gacha-lab');
-const $card = document.getElementById('companion-card');
-const $statsBars = document.getElementById('stats-bars');
-const $statDetails = document.getElementById('stat-details');
-const $rollBtn = document.getElementById('roll-btn');
-const $rollCounter = document.getElementById('roll-counter');
-const $prevRolls = document.getElementById('prev-rolls');
-const $prevRollsGrid = document.getElementById('prev-rolls-grid');
-const $patchSection = document.getElementById('patch-section');
-const $patchCmd = document.getElementById('patch-cmd-text');
-const $copyBtn = document.getElementById('copy-btn');
-const $filterRarity = document.getElementById('filter-rarity');
-const $filterSpecies = document.getElementById('filter-species');
-const $filterShiny = document.getElementById('filter-shiny');
-const $codexGrid = document.getElementById('codex-grid');
-
 // ── Populate species filter ─────────────────────────────────
+const $fSpecies = $('f-species');
+const speciesOpt = document.createElement('option');
+speciesOpt.value = ''; speciesOpt.textContent = 'Any species';
+$fSpecies.appendChild(speciesOpt);
 SPECIES.forEach(s => {
-  const opt = document.createElement('option');
-  opt.value = s;
-  opt.textContent = s.charAt(0).toUpperCase() + s.slice(1);
-  $filterSpecies.appendChild(opt);
+  const o = document.createElement('option');
+  o.value = s; o.textContent = s[0].toUpperCase() + s.slice(1);
+  $fSpecies.appendChild(o);
 });
 
-// ── UUID handling ───────────────────────────────────────────
-$uuid.addEventListener('input', () => {
-  $uuidGo.disabled = $uuid.value.trim().length < 8;
-});
-$uuidGo.addEventListener('click', loadUser);
-$uuid.addEventListener('keydown', (e) => { if (e.key === 'Enter' && !$uuidGo.disabled) loadUser(); });
-
-async function loadUser() {
-  userId = $uuid.value.trim();
-  if (!userId) return;
-
-  $uuidGo.textContent = '...';
-  $uuidGo.disabled = true;
-
-  if (!worker) await initWorker();
-
-  // Get current companion with original salt
-  worker.postMessage({ type: 'roll', userId, salt: 'friend-2026-401' });
-  worker.onmessage = (e) => {
-    if (e.data.type === 'result') {
-      showCompanion(e.data.bones, 'friend-2026-401', true);
-      $gachaLab.classList.add('active');
-      $uuidGo.textContent = 'Load';
-      $uuidGo.disabled = false;
-      setupWorkerListeners();
-    }
-  };
+// ── Worker ──────────────────────────────────────────────────
+async function initWorker() {
+  worker = new Worker('worker.js');
+  worker.postMessage({ type: 'init', wasmBase64: WASM_B64 });
+  await new Promise(r => {
+    const h = (e) => { if (e.data.type === 'ready') { r(); worker.removeEventListener('message', h); } };
+    worker.addEventListener('message', h);
+  });
+  setupWorkerListeners();
 }
 
 function setupWorkerListeners() {
   worker.onmessage = (e) => {
     const { type } = e.data;
-
     if (type === 'result') {
-      showCompanion(e.data.bones, e.data.salt);
+      revealCompanion(e.data.bones, e.data.salt);
     }
     else if (type === 'found') {
-      const r = e.data.result;
-      addToHistory(r.bones, r.salt);
-      $rollCounter.textContent = `Found after ${Number(r.attempts).toLocaleString()} attempts (${r.elapsed}s)`;
+      // Store but don't reveal yet — wait for 'done'
     }
     else if (type === 'progress') {
-      $rollCounter.textContent = `${(e.data.attempts / 1_000_000).toFixed(1)}M attempts...`;
+      $rollInfo.textContent = `${(e.data.attempts / 1_000_000).toFixed(1)}M attempts...`;
     }
     else if (type === 'done') {
-      $rollBtn.classList.remove('hunting');
-      $rollBtn.textContent = '⚡ Roll';
-      $rollBtn.disabled = false;
-      if (e.data.results.length === 0) {
-        $rollCounter.textContent = 'No match found. Try broader filters.';
-      } else {
-        // Show the first (best) result on the card
+      if (e.data.results.length > 0) {
         const best = e.data.results[0];
-        showCompanion(best.bones, best.salt);
+        revealCompanion(best.bones, best.salt);
+        $rollInfo.textContent = `Found after ${Number(best.attempts).toLocaleString()} attempts (${best.elapsed}s)`;
+      } else {
+        $rollInfo.textContent = 'No match found. Try broader filters.';
+        isRolling = false;
+        $rollBtn.disabled = false;
+        $rollBtn.textContent = 'Roll a Buddy';
       }
     }
   };
 }
 
-// ── Show companion ──────────────────────────────────────────
-function showCompanion(bones, salt, isOriginal) {
-  currentBones = bones;
-  currentSalt = salt;
-  const rc = RARITY_COLORS[bones.rarity];
-
-  // Card
-  $card.className = `companion-card rarity-${bones.rarity}`;
-  $card.style.animation = 'rollBounce 500ms var(--ease-bounce)';
-  setTimeout(() => $card.style.animation = '', 500);
-
-  $card.innerHTML = `
-    <div class="rarity-badge" style="color:${rc}">${bones.rarity.toUpperCase()}</div>
-    <div class="stars" style="color:${rc}">${RARITY_STARS[bones.rarity]}</div>
-    <pre class="sprite" style="color:${rc}">${renderSprite(bones)}</pre>
-    <div class="species-name" style="color:${rc}">${bones.species}</div>
-    ${bones.shiny ? '<div class="shiny-badge">✨ SHINY</div>' : ''}
-    <div class="salt-label">${isOriginal ? 'current (original salt)' : `salt: ${salt}`}</div>
-  `;
-
-  // Stats
-  $statsBars.innerHTML = STAT_NAMES.map(name => {
-    const v = bones.stats[name];
-    const color = v >= 80 ? 'var(--legendary)' : v >= 50 ? 'var(--accent)' : v >= 30 ? 'var(--text)' : 'var(--text-muted)';
-    return `
-      <div class="stat-row">
-        <span class="stat-name">${name}</span>
-        <div class="stat-bar"><div class="stat-bar-fill" style="background:${color};width:${v}%"></div></div>
-        <span class="stat-value" style="color:${color}">${v}</span>
-      </div>`;
-  }).join('');
-
-  $statDetails.innerHTML = `
-    <div>Eye: <span>${bones.eye}</span></div>
-    <div>Hat: <span>${bones.hat}</span></div>
-  `;
-
-  // Animate stat bars
-  requestAnimationFrame(() => {
-    document.querySelectorAll('.stat-bar-fill').forEach(el => {
-      el.style.animation = 'revealStat 600ms var(--ease-out) forwards';
-    });
-  });
-
-  // Patch command
-  if (!isOriginal) {
-    $patchSection.classList.add('active');
-    $patchCmd.textContent = `curl -fsSL https://raw.githubusercontent.com/YohannHommet/buddy-patcher/main/buddy.mjs -o /tmp/buddy.mjs && bun /tmp/buddy.mjs --apply "${salt}"`;
-  } else {
-    $patchSection.classList.remove('active');
-  }
-}
-
-// ── Roll button ─────────────────────────────────────────────
+// ── Roll ────────────────────────────────────────────────────
 $rollBtn.addEventListener('click', () => {
-  if (!userId || !worker) return;
-
-  const wantRarity = $filterRarity.value || null;
-  const wantSpecies = $filterSpecies.value || null;
-  const wantShiny = $filterShiny.checked;
+  if (isRolling || !worker) return;
+  const wantRarity = $('f-rarity').value || null;
+  const wantSpecies = $('f-species').value || null;
+  const wantShiny = $('f-shiny').checked;
 
   if (!wantRarity && !wantSpecies && !wantShiny) {
-    // Random roll
-    worker.postMessage({ type: 'random', userId });
-    return;
+    doRandomRoll();
+  } else {
+    doHunt(wantRarity, wantSpecies, wantShiny);
+  }
+});
+
+function doRandomRoll() {
+  isRolling = true;
+  $rollBtn.disabled = true;
+  $rollInfo.textContent = '';
+  // Anticipation phase
+  $card.style.animation = 'rollAnticipation 300ms ease-in forwards';
+  setTimeout(() => {
+    // Suspense phase
+    $card.style.animation = 'rollSuspense 200ms ease-in forwards';
+    setTimeout(() => {
+      worker.postMessage({ type: 'random', userId: userId || 'anonymous' });
+    }, 200);
+  }, 300);
+}
+
+function doHunt(wantRarity, wantSpecies, wantShiny) {
+  isRolling = true;
+  $rollBtn.disabled = true;
+  $rollBtn.textContent = 'Hunting...';
+  $rollInfo.textContent = 'Starting...';
+  // Start anticipation
+  $card.style.animation = 'rollAnticipation 300ms ease-in forwards';
+  setTimeout(() => {
+    $card.style.animation = 'rollSuspense 200ms ease-in forwards';
+    setTimeout(() => {
+      worker.postMessage({
+        type: 'hunt', userId: userId || 'anonymous',
+        filter: { wantRarity, wantSpecies, wantShiny },
+        maxRolls: 15_000_000,
+      });
+    }, 200);
+  }, 300);
+}
+
+// ── Reveal ──────────────────────────────────────────────────
+function revealCompanion(bones, salt) {
+  currentSalt = salt;
+  rollCount++;
+  const rc = RARITY_CSS[bones.rarity];
+  const rIdx = RARITIES.indexOf(bones.rarity);
+
+  // Update card content (while invisible)
+  $('c-rarity').textContent = bones.rarity.toUpperCase();
+  $('c-rarity').style.color = rc;
+  $('c-stars').textContent = RARITY_STARS[bones.rarity];
+  $('c-stars').style.color = rc;
+  $('c-sprite').textContent = renderSprite(bones);
+  $('c-sprite').style.color = rc;
+  $('c-species').textContent = bones.species;
+  $('c-species').style.color = rc;
+  $('c-shiny').innerHTML = bones.shiny ? '<div class="shiny-badge">✨ SHINY</div>' : '';
+  $('c-meta').innerHTML = `<span>eye: ${bones.eye}</span><span>hat: ${bones.hat}</span>`;
+
+  // Card rarity class
+  $card.className = 'card r-' + bones.rarity;
+
+  // Legendary screen flash
+  if (rIdx >= 4) {
+    $flash.style.background = `radial-gradient(circle, ${bones.rarity === 'legendary' ? 'rgba(245,184,61,0.5)' : 'rgba(176,124,245,0.4)'}, transparent 70%)`;
+    $flash.classList.add('active');
+    setTimeout(() => $flash.classList.remove('active'), 600);
   }
 
-  // Hunt mode
-  $rollBtn.classList.add('hunting');
-  $rollBtn.textContent = 'Hunting...';
-  $rollBtn.disabled = true;
-  $rollCounter.textContent = 'Starting...';
+  // Burst particles for epic+
+  if (rIdx >= 3) {
+    spawnBurst(rIdx >= 4 ? 24 : 12, rc);
+  }
 
-  worker.postMessage({
-    type: 'hunt',
-    userId,
-    filter: { wantRarity, wantSpecies, wantShiny },
-    maxRolls: 15_000_000,
-  });
-});
+  // Background particle burst
+  $particles.classList.add('burst');
+  setTimeout(() => $particles.classList.remove('burst'), 2000);
 
-// ── History ─────────────────────────────────────────────────
-function addToHistory(bones, salt) {
-  rollHistory.unshift({ bones, salt });
-  if (rollHistory.length > 20) rollHistory.pop();
-  renderHistory();
+  // Reveal animation
+  const anim = ['revealCommon','revealUncommon','revealRare','revealEpic','revealLegendary'][rIdx];
+  const dur = REVEAL_DURATION[bones.rarity];
+  $card.style.animation = `${anim} ${dur}ms var(--ease-bounce) forwards`;
+
+  setTimeout(() => {
+    $card.style.animation = '';
+    isRolling = false;
+    $rollBtn.disabled = false;
+    $rollBtn.textContent = 'Roll Again';
+  }, dur + 50);
+
+  // Stats
+  renderStats(bones);
+
+  // Patch command
+  $patchSection.classList.add('active');
+  $patchCmd.textContent = `curl -fsSL https://raw.githubusercontent.com/YohannHommet/buddy-patcher/main/buddy.mjs -o /tmp/buddy.mjs && bun /tmp/buddy.mjs --apply "${salt}"`;
+
+  // Roll counter
+  if (rollCount > 1) {
+    $rollInfo.textContent = $rollInfo.textContent || `Roll #${rollCount}`;
+  }
 }
 
-function renderHistory() {
-  $prevRolls.classList.add('active');
-  $prevRollsGrid.innerHTML = rollHistory.map((r, i) => {
-    const rc = RARITY_COLORS[r.bones.rarity];
-    return `<div class="prev-roll-chip" data-idx="${i}" style="border-color:${rc}">
-      <span class="chip-stars" style="color:${rc}">${RARITY_STARS[r.bones.rarity]}</span>
-      <span>${r.bones.species}${r.bones.shiny ? ' ✨' : ''}</span>
+function renderStats(bones) {
+  $stats.innerHTML = STAT_NAMES.map((name, i) => {
+    const v = bones.stats[name];
+    const pct = v / 100;
+    const color = v >= 80 ? 'var(--legendary)' : v >= 50 ? 'var(--accent)' : v >= 30 ? 'var(--text)' : 'var(--text-muted)';
+    return `<div class="stat-row">
+      <span class="stat-name">${name}</span>
+      <div class="stat-bar"><div class="stat-bar-fill" style="background:${color};--pct:${pct};--delay:${i*80}ms"></div></div>
+      <span class="stat-value" style="color:${color}">${v}</span>
     </div>`;
   }).join('');
-
-  $prevRollsGrid.querySelectorAll('.prev-roll-chip').forEach(chip => {
-    chip.addEventListener('click', () => {
-      const idx = parseInt(chip.dataset.idx);
-      const r = rollHistory[idx];
-      showCompanion(r.bones, r.salt);
-    });
+  // Trigger animation
+  requestAnimationFrame(() => {
+    $stats.querySelectorAll('.stat-bar-fill').forEach(el => el.classList.add('animate'));
   });
 }
 
-// ── Copy button ─────────────────────────────────────────────
-$copyBtn.addEventListener('click', () => {
+function spawnBurst(count, colorVar) {
+  const rect = $card.getBoundingClientRect();
+  const cx = rect.left + rect.width / 2;
+  const cy = rect.top + rect.height / 2;
+  for (let i = 0; i < count; i++) {
+    const angle = (Math.PI * 2 * i) / count + (Math.random() - 0.5) * 0.5;
+    const dist = 80 + Math.random() * 100;
+    const p = document.createElement('div');
+    p.className = 'burst-particle';
+    p.style.left = cx + 'px';
+    p.style.top = cy + 'px';
+    p.style.background = colorVar.includes('var') ? '' : colorVar;
+    p.style.backgroundColor = colorVar;
+    p.style.setProperty('--bx', Math.cos(angle) * dist + 'px');
+    p.style.setProperty('--by', Math.sin(angle) * dist + 'px');
+    document.body.appendChild(p);
+    setTimeout(() => p.remove(), 900);
+  }
+}
+
+// ── Personalize ─────────────────────────────────────────────
+$('perso-toggle').addEventListener('click', () => {
+  const body = $('perso-body');
+  const toggle = $('perso-toggle');
+  const open = body.classList.toggle('open');
+  toggle.classList.toggle('open', open);
+});
+
+$('uuid-input').addEventListener('input', function() {
+  $('uuid-go').disabled = this.value.trim().length < 8;
+});
+$('uuid-go').addEventListener('click', loadUser);
+$('uuid-input').addEventListener('keydown', e => { if (e.key === 'Enter') loadUser(); });
+
+function loadUser() {
+  const val = $('uuid-input').value.trim();
+  if (!val) return;
+  userId = val;
+  worker.postMessage({ type: 'roll', userId, salt: 'friend-2026-401' });
+  $rollInfo.textContent = 'Loading your companion...';
+}
+
+// ── Copy ────────────────────────────────────────────────────
+$('copy-btn').addEventListener('click', () => {
   navigator.clipboard.writeText($patchCmd.textContent);
-  $copyBtn.textContent = 'Copied!';
-  $copyBtn.classList.add('copied');
-  setTimeout(() => { $copyBtn.textContent = 'Copy'; $copyBtn.classList.remove('copied'); }, 2000);
+  const btn = $('copy-btn');
+  btn.textContent = 'Copied!';
+  btn.classList.add('copied');
+  setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 2000);
 });
 
-// ── Species Codex ───────────────────────────────────────────
-$codexGrid.innerHTML = SPECIES.map(s => `
-  <div class="codex-card" data-species="${s}">
-    <pre class="codex-sprite">${renderCodexSprite(s)}</pre>
-    <div class="codex-name">${s}</div>
-  </div>
-`).join('');
-
-$codexGrid.querySelectorAll('.codex-card').forEach(card => {
-  card.addEventListener('click', () => {
-    const species = card.dataset.species;
-    $filterSpecies.value = species;
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-    if (userId) $uuid.focus();
-  });
-});
-
-// ── Init ────────────────────────────────────────────────────
-$uuid.focus();
+// ── Boot ────────────────────────────────────────────────────
+(async () => {
+  await initWorker();
+  // Auto-roll a random companion on load — zero friction
+  worker.postMessage({ type: 'random', userId: 'visitor-' + Date.now() });
+})();
 </script>
 </body>
 </html>
