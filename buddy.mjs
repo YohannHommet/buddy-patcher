@@ -6,12 +6,12 @@
 //  100% local — your UUID never leaves your machine.
 //
 //  Usage:
-//    bun buddy.mjs                          Interactive menu
-//    bun buddy.mjs --hunt legendary         Quick hunt
-//    bun buddy.mjs --hunt epic:dragon+shiny Combined filter
-//    bun buddy.mjs --apply "<salt>"         Patch binary directly
-//    bun buddy.mjs --revert                 Restore original binary
-//    bun buddy.mjs --help                   Show help
+//    bun buddy-patcher.mjs                          Interactive menu
+//    bun buddy-patcher.mjs --hunt legendary         Quick hunt
+//    bun buddy-patcher.mjs --hunt epic:dragon+shiny Combined filter
+//    bun buddy-patcher.mjs --apply "<salt>"         Patch binary directly
+//    bun buddy-patcher.mjs --revert                 Restore original binary
+//    bun buddy-patcher.mjs --help                   Show help
 //
 //  Algorithm source: github.com/zackautocracy/claude-code/tree/main/src/buddy
 // ═══════════════════════════════════════════════════════════════════════════
